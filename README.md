@@ -32,3 +32,7 @@ python src/main.py
 9. src\views.py	 96%
 
 ## Total	93%
+
+## Лицензия:
+
+Этот проект лицензирован по [лицензии MIT](LICENSE).

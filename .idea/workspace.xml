@@ -4,22 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="eefdd644-b8bc-4a25-b62a-30adb5a0bfdc" name="Changes" comment="обновлённый файл src/views.py">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/test_cbr_client.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/test_external_api.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/test_main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/test_search.py" afterDir="false" />
+    <list default="true" id="eefdd644-b8bc-4a25-b62a-30adb5a0bfdc" name="Changes" comment="написание тестов, корректировка недочётов, обновлен файл README.md">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/cbr_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/cbr_client.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/external_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/external_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/services.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/services.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_reports.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_reports.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_services.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_services.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_views.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_views.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -36,7 +23,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="main" />
+        <entry key="$PROJECT_DIR$" value="develop" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -62,23 +49,23 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Python tests.Python tests in test_cbr_client.py.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests in test_external_api.py.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests in test_main.py.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests in test_reports.py.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests in test_search.py.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests in test_services.py.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests in test_utils.py.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests in test_views.py.executor&quot;: &quot;Run&quot;,
-    &quot;Python.external_api.executor&quot;: &quot;Run&quot;,
-    &quot;Python.main.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;develop&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;advanced.settings&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python tests.Python tests in test_cbr_client.py.executor": "Run",
+    "Python tests.Python tests in test_external_api.py.executor": "Run",
+    "Python tests.Python tests in test_main.py.executor": "Run",
+    "Python tests.Python tests in test_reports.py.executor": "Run",
+    "Python tests.Python tests in test_search.py.executor": "Run",
+    "Python tests.Python tests in test_services.py.executor": "Run",
+    "Python tests.Python tests in test_utils.py.executor": "Run",
+    "Python tests.Python tests in test_views.py.executor": "Run",
+    "Python.external_api.executor": "Run",
+    "Python.main.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "feature",
+    "settings.editor.selected.configurable": "advanced.settings"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\Александра\my_prj\Курсовая1\data" />
@@ -248,12 +235,21 @@
       <option name="project" value="LOCAL" />
       <updated>1782810778094</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="написание тестов, корректировка недочётов, обновлен файл README.md">
+      <option name="closed" value="true" />
+      <created>1782822585089</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1782822585089</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="создание файлов курсовой, написание кода" />
     <MESSAGE value="обновлённый файл src/views.py" />
-    <option name="LAST_COMMIT_MESSAGE" value="обновлённый файл src/views.py" />
+    <MESSAGE value="написание тестов, корректировка недочётов, обновлен файл README.md" />
+    <option name="LAST_COMMIT_MESSAGE" value="написание тестов, корректировка недочётов, обновлен файл README.md" />
   </component>
 </project>
