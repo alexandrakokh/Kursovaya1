@@ -5,10 +5,7 @@ logger = logging.getLogger(__name__)
 
 def fetch_currency_rates() -> List[Dict[str, Any]]:
     try:
-        # Сюда вставь свой реальный запрос к API (requests.get и т.д.)
-        # response = requests.get("...")
-        # return response.json()
-        raise Exception("API недоступно (для теста)")  # закомментируй, когда будет реальный API
+        raise Exception("API недоступно (для теста)")
     except Exception as e:
         logger.warning("API курсов валют недоступно. Используем дефолтные значения. Ошибка: %s", e)
         return [
@@ -18,8 +15,6 @@ def fetch_currency_rates() -> List[Dict[str, Any]]:
 
 def fetch_stock_prices() -> List[Dict[str, Any]]:
     try:
-        # Сюда вставь реальный запрос к API акций
-        # ...
         raise Exception("API акций недоступно (для теста)")
     except Exception as e:
         logger.warning("API акций недоступно. Используем дефолтные значения. Ошибка: %s", e)

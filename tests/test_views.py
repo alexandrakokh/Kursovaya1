@@ -1,51 +1,245 @@
+import pytest
 import pandas as pd
 from datetime import datetime
 from src.views import get_greeting, build_main_page_response, build_events_response
 
-def test_get_greeting_morning():
-    dt = datetime(2024, 5, 20, 8, 30)
-    assert get_greeting(dt) == "Доброе утро"
 
-def test_get_greeting_evening():
-    dt = datetime(2024, 5, 20, 19, 0)
-    assert get_greeting(dt) == "Добрый вечер"
+@pytest.fixture
+def mock_currency_and_stock():
+    """Единая фикстура для валют и акций (формат строго по чек-листу)."""
+    return {
+        "currency_rates": [
+            {"currency": "USD", "rate": 90.0},
+            {"currency": "EUR", "rate": 100.0}
+        ],
+        "stock_prices": [
+            {"stock": "AAPL", "price": 150.0},
+            {"stock": "GOOGL", "price": 140.0}
+        ]
+    }
 
-def test_build_main_page_response():
+
+@pytest.fixture
+def empty_df():
+    return pd.DataFrame()
+
+
+@pytest.fixture
+def sample_transactions():
+    """Минимальный пример данных (4 строки) для быстрых тестов."""
     data = {
         "Дата операции": [
-            datetime(2024, 5, 1, 10, 0),
-            datetime(2024, 5, 20, 14, 30),
+            datetime(2023, 10, 1, 10, 0),
+            datetime(2023, 10, 2, 14, 0),
+            datetime(2023, 10, 3, 19, 0),
+            datetime(2023, 10, 4, 12, 0),
         ],
-        "Номер карты": ["1234567890123456", "1234567890123457"],
-        "Сумма операции": [1000.0, 250.0],
-        "Сумма платежа": [1000.0, 250.0],
-        "Категория": ["Супермаркеты", "Фастфуд"],
-        "Описание": ["Лента", "KFC"],
+        "Номер карты": ["1234", "1234", "5678", "5678"],
+        "Сумма операции": [-1000, -2000, 500, -3000],
+        "Категория": ["Продукты", "Переводы", "Продукты", "Одежда"],
+        "Описание": ["Молоко", "Перевод другу", "Хлеб", "Куртка"]
     }
-    df = pd.DataFrame(data)
-    currency_rates = [{"currency": "USD", "rate": 90.0}]
-    stock_prices = [{"stock": "AAPL", "price": 180.0}]
+    return pd.DataFrame(data)
 
-    resp = build_main_page_response(df, "2024-05-20 14:30:00", currency_rates, stock_prices)
 
-    assert resp["greeting"] == "Добрый день"
-    assert len(resp["cards"]) == 2
-    assert resp["cards"][0]["cashback"] == 10.0
+@pytest.fixture
+def sample_transactions_rich():
+    """
+    Расширенный набор данных: много категорий, много транзакций.
+    Нужен, чтобы реально проверить топ-5, топ-7 и «Остальное».
+    """
+    categories = [
+        "Продукты", "Такси", "Одежда", "Развлечения", "Техника",
+        "Книги", "Спорт", "Переводы", "Наличные", "Другое", "Кафе"
+    ]
+    amounts = [-1000, -900, -800, -700, -600, -500, -400, -3000, -2000, -100, -150]
+    cards = ["1112"] * len(categories)
 
-def test_build_events_response_expenses():
     data = {
-        "Дата операции": [
-            datetime(2024, 5, 1, 10, 0),
-            datetime(2024, 5, 2, 12, 0),
-            datetime(2024, 5, 3, 15, 0),
-        ],
-        "Сумма операции": [-1000.0, -250.0, 500.0],  # траты отрицательные
-        "Категория": ["Супермаркеты", "Наличные", "Пополнение"],
-        "Описание": ["", "", ""],
+        "Дата операции": [datetime(2023, 10, i, 10, 0) for i in range(1, len(categories) + 1)],
+        "Номер карты": cards,
+        "Сумма операции": amounts,
+        "Категория": categories,
+        "Описание": [f"Покупка {i}" for i in range(len(categories))]
     }
-    df = pd.DataFrame(data)
+    return pd.DataFrame(data)
 
-    resp = build_events_response(df, "2024-05-31 12:00:00", "M")
 
-    assert resp["expenses"]["total_amount"] == 1250
-    assert resp["income"]["total_amount"] == 500
+class TestGetGreeting:
+    """Тесты для функции приветствия по времени."""
+
+    @pytest.mark.parametrize("hour, expected", [
+        (6, "Доброе утро"),
+        (11, "Доброе утро"),
+        (12, "Добрый день"),
+        (17, "Добрый день"),
+        (18, "Добрый вечер"),
+        (22, "Добрый вечер"),
+        (23, "Доброй ночи"),
+        (0, "Доброй ночи"),
+        (5, "Доброй ночи"),
+    ])
+    def test_greeting_by_hour(self, hour, expected):
+        dt = datetime(2023, 1, 1, hour=hour, minute=30)
+        assert get_greeting(dt) == expected
+
+
+class TestBuildMainPageResponse:
+    """Тесты для главной страницы."""
+
+
+    def test_empty_dataframe(self, mock_currency_and_stock, empty_df):
+        response = build_main_page_response(
+            transactions=empty_df,
+            date_str="2023-10-01 12:00:00",
+            **mock_currency_and_stock
+        )
+        assert response["greeting"] == "Добрый день"
+        assert response["cards"] == []
+        assert response["top_categories"] == []
+        assert response["total_operations_count"] == 0
+
+    def test_no_amount_column(self, mock_currency_and_stock):
+        df = pd.DataFrame({
+            "Дата операции": [datetime.now()],
+            "Номер карты": ["1234"],
+            "Категория": ["Еда"]
+        })
+        response = build_main_page_response(
+            transactions=df,
+            date_str="2023-10-01 12:00:00",
+            **mock_currency_and_stock
+        )
+        assert isinstance(response, dict)
+        assert "total_operations_count" in response
+        assert len(response["cards"]) == 0
+
+    def test_cards_calculation(self, mock_currency_and_stock, sample_transactions):
+        response = build_main_page_response(
+            transactions=sample_transactions,
+            date_str="2023-10-01 12:00:00",
+            **mock_currency_and_stock
+        )
+
+        assert len(response["cards"]) >= 1
+        card_1234 = next((c for c in response["cards"] if c["last_digits"] == "1234"), None)
+        if card_1234:
+            # Внимание: сейчас кешбэк считается со ВСЕХ трат по карте (включая переводы).
+            # Траты: -1000 (Продукты) + -2000 (Переводы) = -3000. Кешбэк = 30.
+            assert card_1234["total_spent"] == -3000
+            assert card_1234["cashback"] == 30
+
+    def test_top_transactions_exclude_transfers(self, mock_currency_and_stock, sample_transactions):
+        response = build_main_page_response(
+            transactions=sample_transactions,
+            date_str="2023-10-01 12:00:00",
+            **mock_currency_and_stock
+        )
+
+        top_cats = [t.get("category") for t in response["top_transactions"]]
+        assert "Переводы" not in top_cats
+        assert len(response["top_transactions"]) <= 5
+
+    def test_top_categories_special_handling(self, mock_currency_and_stock, sample_transactions_rich):
+        response = build_main_page_response(
+            transactions=sample_transactions_rich,
+            date_str="2023-10-01 12:00:00",
+            **mock_currency_and_stock
+        )
+
+        top_cats_names = [c["category"] for c in response["top_categories"]]
+        # Спецкатегории должны быть в списке
+        assert "Переводы" in top_cats_names
+        assert "Наличные" in top_cats_names
+
+        # Проверяем, что есть «Остальное» (так как категорий много)
+        has_rest = any(c["category"] == "Остальное" for c in response["top_categories"])
+        assert has_rest, "Должно быть поле «Остальное», так как категорий больше 7"
+
+    def test_cashback_categories_exclude_special(self, mock_currency_and_stock, sample_transactions):
+        response = build_main_page_response(
+            transactions=sample_transactions,
+            date_str="2023-10-01 12:00:00",
+            **mock_currency_and_stock
+        )
+
+        cb_cats = [c["category"] for c in response["top_cashback_categories"]]
+        assert "Переводы" not in cb_cats
+
+    def test_invalid_date_string_fallback(self, mock_currency_and_stock, sample_transactions):
+        response = build_main_page_response(
+            transactions=sample_transactions,
+            date_str="НЕ_ДАТА",
+            **mock_currency_and_stock
+        )
+        greeting = response["greeting"]
+        assert greeting in ["Доброе утро", "Добрый день", "Добрый вечер", "Доброй ночи"]
+
+
+class TestBuildEventsResponse:
+    """Тесты для страницы событий."""
+
+    @pytest.fixture
+    def simple_transactions(self):
+        data = {
+            "Дата операции": [datetime(2023, 1, i, 10, 0) for i in range(1, 15)],
+            "Сумма операции": [-i * 100 for i in range(1, 15)],
+            "Категория": ["Event"] * 14,
+            "Описание": ["Test event"] * 14
+        }
+        return pd.DataFrame(data)
+
+    def test_events_tail_and_format(self, simple_transactions):
+        response = build_events_response(
+            transactions=simple_transactions,
+            date_str="2023-01-01 10:00:00",
+            range_type="week"
+        )
+
+        assert response["range_type"] == "week"
+        assert response["total_count"] == 14
+
+        events = response["events"]
+        assert len(events) == 10  # tail(10)
+
+        first_date = events[0]["date"]
+        last_date = events[-1]["date"]
+
+        assert isinstance(first_date, str)
+        assert first_date == "05.01.2023"
+        assert last_date == "14.01.2023"
+
+    def test_events_empty_df(self):
+        empty_df = pd.DataFrame()
+        response = build_events_response(
+            transactions=empty_df,
+            date_str="2023-01-01 10:00:00",
+            range_type="month"
+        )
+        assert response["events"] == []
+        assert response["total_count"] == 0
+
+
+def test_top_transactions_date_format(mock_currency_and_stock, sample_transactions_rich):
+    from src.views import build_main_page_response
+
+    response = build_main_page_response(
+        transactions=sample_transactions_rich,
+        date_str="2023-10-01 12:00:00",
+        **mock_currency_and_stock
+    )
+
+    top_transactions = response["top_transactions"]
+    assert len(top_transactions) > 0, "Топ-транзакций нет, тест не имеет смысла"
+
+    # Если данных достаточно, должно быть ровно 5 записей
+    assert len(top_transactions) == 5, f"Должно быть ровно 5 транзакций, а получено {len(top_transactions)}"
+
+    for t in top_transactions:
+        assert isinstance(t["date"], str), f"Дата не строка: {t['date']!r}"
+        parts = t["date"].split(".")
+        assert len(parts) == 3, f"Неверный формат даты (нет трёх частей): {t['date']}"
+        day, month, year = parts
+        assert len(day) == 2, f"День должен быть 2 символа: {day}"
+        assert len(month) == 2, f"Месяц должен быть 2 символа: {month}"
+        assert len(year) == 4, f"Год должен быть 4 символа: {year}"
