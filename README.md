@@ -24,14 +24,14 @@ python src/main.py
 1. src\__init__.py	100%
 2. src\cbr_client.py 100%
 3. src\external_api.py	100%
-4. src\main.py	 97%
+4. src\main.py	 76%
 5. src\reports.py	85%
 6. src\search.py	96%
 7. src\services.py	 88%
-8. src\utils.py	 90%
-9. src\views.py	 96%
+8. src\utils.py	 92%
+9. src\views.py	 86%
 
-## Total	93%
+## Total	87%
 
 ## Лицензия:
 
