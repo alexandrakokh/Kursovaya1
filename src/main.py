@@ -143,6 +143,40 @@ def main(cli_args=None):
         transactions = pd.DataFrame()
     # ---------------------------------------------------------
 
+    # =========================================================
+    # НОВАЯ ЧАСТЬ: фильтрация операций по дате + исправление предупреждения pandas
+    # =========================================================
+    if not transactions.empty and "Дата операции" in transactions.columns:
+        # Приводим колонку к datetime, явно указывая dayfirst=True, чтобы убрать UserWarning
+        transactions["Дата операции"] = pd.to_datetime(
+            transactions["Дата операции"],
+            errors="coerce",
+            dayfirst=True,  # <-- это убирает предупреждение про формат даты
+        )
+
+        # Парсим дату из аргументов
+        report_date = pd.to_datetime(report_date_str, errors="coerce")
+        if pd.isna(report_date):
+            logger.warning("Некорректная дата, фильтрация не применяется.")
+        else:
+            # Фильтруем операции: оставляем только те, где дата совпадает с датой отчёта
+            mask = transactions["Дата операции"].dt.date == report_date.date()
+            filtered_count = mask.sum()
+            original_count = len(transactions)
+            transactions = transactions[mask]
+            logger.info(
+                "Отфильтровано операций по дате %s: осталось %d из %d",
+                report_date.strftime("%Y-%m-%d"),
+                filtered_count,
+                original_count,
+            )
+    else:
+        if transactions.empty:
+            logger.warning("Нет данных транзакций. Фильтрация невозможна.")
+        elif "Дата операции" not in transactions.columns:
+            logger.warning("В DataFrame нет колонки 'Дата операции'. Фильтрация невозможна.")
+    # =========================================================
+
     if transactions.empty:
         logger.warning("Нет данных транзакций. Отчёт будет содержать только курсы и акции.")
 
