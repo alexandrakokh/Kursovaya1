@@ -6,7 +6,6 @@ from src.services import (
     find_phone_numbers,
     find_person_transfers,
 )
-from datetime import datetime
 
 
 class TestInvestmentBank:

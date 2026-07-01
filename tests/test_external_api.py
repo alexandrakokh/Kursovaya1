@@ -26,7 +26,7 @@ class TestFetchCurrencyRates:
         assert usd["rate"] == 90.0
         assert eur["rate"] == 98.0
 
-    @patch('src.external_api.logger')
+    @patch("src.external_api.logger")
     def test_logs_warning_on_error(self, mock_logger):
         """Проверяем, что при ошибке пишется предупреждение в лог."""
         fetch_currency_rates()
@@ -54,7 +54,7 @@ class TestFetchStockPrices:
         assert stocks["AMZN"] == 3200.0
         assert stocks["TSLA"] == 250.0
 
-    @patch('src.external_api.logger')
+    @patch("src.external_api.logger")
     def test_logs_warning_on_stock_error(self, mock_logger):
         """Проверяем лог для акций."""
         fetch_stock_prices()

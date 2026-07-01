@@ -7,18 +7,17 @@ from src import main
 @patch("src.main.get_currency_rates")
 @patch("src.main.build_main_page_response")
 def test_main_happy_path(mock_build, mock_rates, mock_load):
-    mock_df = pd.DataFrame({
-        "Номер карты": ["1112", "4556", "5091"],
-        "Дата операции": pd.to_datetime(["2026-06-30 10:00", "2026-06-30 11:00", "2026-06-30 12:00"]),
-        "Сумма операции": [-100, -200, 300],
-        "Категория": ["Еда", "Такси", "Доход"],
-        "Описание": ["Молоко", "Поездка", "Перевод"]
-    })
+    mock_df = pd.DataFrame(
+        {
+            "Номер карты": ["1112", "4556", "5091"],
+            "Дата операции": pd.to_datetime(["2026-06-30 10:00", "2026-06-30 11:00", "2026-06-30 12:00"]),
+            "Сумма операции": [-100, -200, 300],
+            "Категория": ["Еда", "Такси", "Доход"],
+            "Описание": ["Молоко", "Поездка", "Перевод"],
+        }
+    )
     mock_load.return_value = mock_df
-    mock_rates.return_value = [
-        {"currency": "USD", "rate": 90.0},
-        {"currency": "EUR", "rate": 98.0}
-    ]
+    mock_rates.return_value = [{"currency": "USD", "rate": 90.0}, {"currency": "EUR", "rate": 98.0}]
     mock_build.return_value = {"greeting": "Добрый день"}
 
     main.main([])

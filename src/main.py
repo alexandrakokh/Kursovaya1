@@ -96,6 +96,7 @@ def get_currency_rates(currencies: List[str]) -> List[Dict[str, float]]:
 def generate_stock_prices(stocks: List[str]) -> List[Dict[str, float]]:
     """Генерирует фейковые цены акций для демонстрации."""
     import random
+
     prices = []
     for s in stocks:
         price = round(random.uniform(100, 3000), 2)

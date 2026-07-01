@@ -1,7 +1,7 @@
 import pandas as pd
 from pathlib import Path
 import tempfile
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from src.utils import load_transactions
 
 
@@ -46,7 +46,7 @@ class TestLoadTransactions:
             "Дата операции": ["31.12.2021 16:44:00", "01.01.2022 09:00:00"],
             "Сумма операции": [100.5, 200.0],
             "Категория": ["Продукты", "Такси"],
-            "Номер карты": ["1234", "5678"]
+            "Номер карты": ["1234", "5678"],
         }
         df_input = pd.DataFrame(data)
         mock_read_excel.return_value = df_input
@@ -68,11 +68,11 @@ class TestLoadTransactions:
             "Дата операции": [
                 "31.12.2021 16:44:00",  # Хороший строгий формат
                 "01.01.2022 09:00:00",  # Ещё один хороший строгий формат
-                "НЕ ДАТА"  # Мусор — должен удалиться
+                "НЕ ДАТА",  # Мусор — должен удалиться
             ],
             "Сумма операции": [100, 200, 300],
             "Категория": ["A", "B", "C"],
-            "Номер карты": ["1", "2", "3"]
+            "Номер карты": ["1", "2", "3"],
         }
         df_input = pd.DataFrame(data)
         mock_read_excel.return_value = df_input
@@ -94,7 +94,7 @@ class TestLoadTransactions:
             "Дата операции": ["01.01.2022 10:00:00"] * 3,
             "Сумма операции": [100, "abc", None],
             "Категория": ["X", "Y", "Z"],
-            "Номер карты": ["1", "2", "3"]
+            "Номер карты": ["1", "2", "3"],
         }
         df_input = pd.DataFrame(data)
         mock_read_excel.return_value = df_input
@@ -113,7 +113,7 @@ class TestLoadTransactions:
             "Дата операции": ["01.01.2022 10:00:00"] * 3,
             "Сумма операции": [10, 20, 30],
             "Категория": [" Продукты ", "Такси  ", "  Переводы"],
-            "Номер карты": ["1", "2", "3"]
+            "Номер карты": ["1", "2", "3"],
         }
         df_input = pd.DataFrame(data)
         mock_read_excel.return_value = df_input
@@ -129,7 +129,7 @@ class TestLoadTransactions:
         data = {
             "Дата операции": ["01.01.2022 10:00:00"],
             "Сумма операции": [100],
-            "Категория": ["Еда"]
+            "Категория": ["Еда"],
             # Нет колонки Номер карты
         }
         df_input = pd.DataFrame(data)
@@ -152,7 +152,7 @@ class TestLoadTransactions:
                 "Дата операции": ["31.12.2021 16:44:00"],
                 "Сумма операции": [999.99],
                 "Категория": ["Супермаркет"],
-                "Номер карты": ["9876"]
+                "Номер карты": ["9876"],
             }
             df_to_save = pd.DataFrame(data)
             df_to_save.to_excel(file_path, index=False)

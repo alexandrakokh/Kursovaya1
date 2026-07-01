@@ -8,14 +8,8 @@ from src.views import get_greeting, build_main_page_response
 def mock_currency_and_stock():
     """Единая фикстура для валют и акций (формат строго по чек-листу)."""
     return {
-        "currency_rates": [
-            {"currency": "USD", "rate": 90.0},
-            {"currency": "EUR", "rate": 100.0}
-        ],
-        "stock_prices": [
-            {"stock": "AAPL", "price": 150.0},
-            {"stock": "GOOGL", "price": 140.0}
-        ]
+        "currency_rates": [{"currency": "USD", "rate": 90.0}, {"currency": "EUR", "rate": 100.0}],
+        "stock_prices": [{"stock": "AAPL", "price": 150.0}, {"stock": "GOOGL", "price": 140.0}],
     }
 
 
@@ -37,7 +31,7 @@ def sample_transactions():
         "Номер карты": ["1234", "1234", "5678", "5678"],
         "Сумма операции": [-1000, -2000, 500, -3000],
         "Категория": ["Продукты", "Переводы", "Продукты", "Одежда"],
-        "Описание": ["Молоко", "Перевод другу", "Хлеб", "Куртка"]
+        "Описание": ["Молоко", "Перевод другу", "Хлеб", "Куртка"],
     }
     return pd.DataFrame(data)
 
@@ -49,8 +43,17 @@ def sample_transactions_rich():
     Нужен, чтобы реально проверить топ-5, топ-7 и «Остальное».
     """
     categories = [
-        "Продукты", "Такси", "Одежда", "Развлечения", "Техника",
-        "Книги", "Спорт", "Переводы", "Наличные", "Другое", "Кафе"
+        "Продукты",
+        "Такси",
+        "Одежда",
+        "Развлечения",
+        "Техника",
+        "Книги",
+        "Спорт",
+        "Переводы",
+        "Наличные",
+        "Другое",
+        "Кафе",
     ]
     amounts = [-1000, -900, -800, -700, -600, -500, -400, -3000, -2000, -100, -150]
     cards = ["1112"] * len(categories)
@@ -60,7 +63,7 @@ def sample_transactions_rich():
         "Номер карты": cards,
         "Сумма операции": amounts,
         "Категория": categories,
-        "Описание": [f"Покупка {i}" for i in range(len(categories))]
+        "Описание": [f"Покупка {i}" for i in range(len(categories))],
     }
     return pd.DataFrame(data)
 
@@ -68,17 +71,20 @@ def sample_transactions_rich():
 class TestGetGreeting:
     """Тесты для функции приветствия по времени."""
 
-    @pytest.mark.parametrize("hour, expected", [
-        (6, "Доброе утро"),
-        (11, "Доброе утро"),
-        (12, "Добрый день"),
-        (17, "Добрый день"),
-        (18, "Добрый вечер"),
-        (22, "Добрый вечер"),
-        (23, "Доброй ночи"),
-        (0, "Доброй ночи"),
-        (5, "Доброй ночи"),
-    ])
+    @pytest.mark.parametrize(
+        "hour, expected",
+        [
+            (6, "Доброе утро"),
+            (11, "Доброе утро"),
+            (12, "Добрый день"),
+            (17, "Добрый день"),
+            (18, "Добрый вечер"),
+            (22, "Добрый вечер"),
+            (23, "Доброй ночи"),
+            (0, "Доброй ночи"),
+            (5, "Доброй ночи"),
+        ],
+    )
     def test_greeting_by_hour(self, hour, expected):
         dt = datetime(2023, 1, 1, hour=hour, minute=30)
         assert get_greeting(dt) == expected
@@ -91,8 +97,8 @@ class TestBuildMainPageResponse:
         response = build_main_page_response(
             transactions=empty_df,
             report_date_str="2023-10-01 12:00:00",  # исправлено имя аргумента
-            now=datetime.now(),                    # добавлен обязательный аргумент
-            **mock_currency_and_stock
+            now=datetime.now(),  # добавлен обязательный аргумент
+            **mock_currency_and_stock,
         )
         # Приветствие зависит от текущего времени, поэтому не проверяем точное значение, только наличие
         assert "greeting" in response
@@ -101,17 +107,16 @@ class TestBuildMainPageResponse:
         assert response["total_operations_count"] == 0
 
     def test_no_amount_column(self, mock_currency_and_stock):
-        df = pd.DataFrame({
-            "Дата операции": [datetime.now()],
-            "Номер карты": ["1234"],
-            "Категория": ["Еда"]
-            # Сумма операции отсутствует специально
-        })
+        df = pd.DataFrame(
+            {
+                "Дата операции": [datetime.now()],
+                "Номер карты": ["1234"],
+                "Категория": ["Еда"],
+                # Сумма операции отсутствует специально
+            }
+        )
         response = build_main_page_response(
-            transactions=df,
-            report_date_str="2023-10-01 12:00:00",
-            now=datetime.now(),
-            **mock_currency_and_stock
+            transactions=df, report_date_str="2023-10-01 12:00:00", now=datetime.now(), **mock_currency_and_stock
         )
         assert isinstance(response, dict)
         assert "total_operations_count" in response
@@ -123,7 +128,7 @@ class TestBuildMainPageResponse:
             transactions=sample_transactions,
             report_date_str="2023-10-01 12:00:00",
             now=datetime.now(),
-            **mock_currency_and_stock
+            **mock_currency_and_stock,
         )
 
         assert len(response["cards"]) >= 1
@@ -138,7 +143,7 @@ class TestBuildMainPageResponse:
             transactions=sample_transactions,
             report_date_str="2023-10-01 12:00:00",
             now=datetime.now(),
-            **mock_currency_and_stock
+            **mock_currency_and_stock,
         )
 
         top_cats = [t.get("category") for t in response["top_transactions"]]
@@ -150,7 +155,7 @@ class TestBuildMainPageResponse:
             transactions=sample_transactions_rich,
             report_date_str="2023-10-01 12:00:00",
             now=datetime.now(),
-            **mock_currency_and_stock
+            **mock_currency_and_stock,
         )
 
         top_cats_names = [c["category"] for c in response["top_categories"]]
@@ -167,7 +172,7 @@ class TestBuildMainPageResponse:
             transactions=sample_transactions,
             report_date_str="2023-10-01 12:00:00",
             now=datetime.now(),
-            **mock_currency_and_stock
+            **mock_currency_and_stock,
         )
 
         cb_cats = [c["category"] for c in response["top_cashback_categories"]]
@@ -175,10 +180,7 @@ class TestBuildMainPageResponse:
 
     def test_invalid_date_string_fallback(self, mock_currency_and_stock, sample_transactions):
         response = build_main_page_response(
-            transactions=sample_transactions,
-            report_date_str="НЕ_ДАТА",
-            now=datetime.now(),
-            **mock_currency_and_stock
+            transactions=sample_transactions, report_date_str="НЕ_ДАТА", now=datetime.now(), **mock_currency_and_stock
         )
         greeting = response["greeting"]
         assert greeting in ["Доброе утро", "Добрый день", "Добрый вечер", "Доброй ночи"]
@@ -188,7 +190,7 @@ class TestBuildMainPageResponse:
             transactions=sample_transactions_rich,
             report_date_str="2023-10-01 12:00:00",
             now=datetime.now(),
-            **mock_currency_and_stock
+            **mock_currency_and_stock,
         )
 
         top_transactions = response["top_transactions"]

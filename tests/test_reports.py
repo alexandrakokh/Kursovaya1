@@ -20,10 +20,10 @@ def sample_df():
         "Дата операции": [
             datetime(2026, 6, 29, 10, 0),  # пн
             datetime(2026, 6, 30, 12, 0),  # вт
-            datetime(2026, 7, 3, 14, 0),   # пт
-            datetime(2026, 7, 4, 9, 0),    # сб
-            datetime(2026, 7, 5, 11, 0),   # вс
-            datetime(2026, 7, 6, 8, 0),   # пн
+            datetime(2026, 7, 3, 14, 0),  # пт
+            datetime(2026, 7, 4, 9, 0),  # сб
+            datetime(2026, 7, 5, 11, 0),  # вс
+            datetime(2026, 7, 6, 8, 0),  # пн
         ],
         "Категория": [
             "Продукты",
@@ -34,12 +34,12 @@ def sample_df():
             "Продукты",
         ],
         "Сумма операции": [
-            -1500.0,   # трата
-            -300.0,    # трата
-            -2000.0,   # трата
-            -800.0,    # трата (выходные)
-            -500.0,    # трата (выходные)
-            10000.0,   # доход (не должен попасть в траты!)
+            -1500.0,  # трата
+            -300.0,  # трата
+            -2000.0,  # трата
+            -800.0,  # трата (выходные)
+            -500.0,  # трата (выходные)
+            10000.0,  # доход (не должен попасть в траты!)
         ],
     }
     return pd.DataFrame(data)
@@ -61,10 +61,7 @@ class TestGetSpendingDF:
 
     def test_fallback_column_name(self):
         # Проверяем, что сработает фолбэк на "Сумма платежа"
-        df = pd.DataFrame({
-            "Сумма платежа": [-100, -200],
-            "Категория": ["A", "B"]
-        })
+        df = pd.DataFrame({"Сумма платежа": [-100, -200], "Категория": ["A", "B"]})
         result = _get_spending_df(df)
         assert not result.empty
         assert len(result) == 2
@@ -78,13 +75,15 @@ class TestGetSpendingDF:
 class TestSpendingByCategory:
     """Тесты для spending_by_category."""
 
-    @patch('src.reports._save_report')
+    @patch("src.reports._save_report")
     def test_correct_total_for_category(self, mock_save):
-        df = pd.DataFrame({
-            "Дата операции": [datetime(2026, 6, 29)] * 3,
-            "Категория": ["Продукты", "Продукты", "Такси"],
-            "Сумма операции": [-500, -300, -100]
-        })
+        df = pd.DataFrame(
+            {
+                "Дата операции": [datetime(2026, 6, 29)] * 3,
+                "Категория": ["Продукты", "Продукты", "Такси"],
+                "Сумма операции": [-500, -300, -100],
+            }
+        )
 
         result = spending_by_category(df, "Продукты")
 
@@ -94,13 +93,9 @@ class TestSpendingByCategory:
         # _save_report был вызван ровно 1 раз
         assert mock_save.call_count == 1
 
-    @patch('src.reports._save_report')
+    @patch("src.reports._save_report")
     def test_category_not_found_returns_zero(self, mock_save):
-        df = pd.DataFrame({
-            "Дата операции": [datetime(2026, 6, 29)],
-            "Категория": ["Такси"],
-            "Сумма операции": [-100]
-        })
+        df = pd.DataFrame({"Дата операции": [datetime(2026, 6, 29)], "Категория": ["Такси"], "Сумма операции": [-100]})
 
         result = spending_by_category(df, "Продукты")
 
@@ -108,14 +103,16 @@ class TestSpendingByCategory:
         assert result["total_amount"] == 0.0
         assert result["rows"] == 0
 
-    @patch('src.reports._save_report')
+    @patch("src.reports._save_report")
     def test_whitespace_and_case_normalization(self, mock_save):
         """Проверяем, что нормализация категорий работает."""
-        df = pd.DataFrame({
-            "Дата операции": [datetime(2026, 6, 29)],
-            "Категория": ["  продукты  "],  # с пробелами
-            "Сумма операции": [-200]
-        })
+        df = pd.DataFrame(
+            {
+                "Дата операции": [datetime(2026, 6, 29)],
+                "Категория": ["  продукты  "],  # с пробелами
+                "Сумма операции": [-200],
+            }
+        )
 
         result = spending_by_category(df, "продукты")
 
@@ -125,19 +122,21 @@ class TestSpendingByCategory:
 class TestSpendingByWeekday:
     """Тесты для spending_by_weekday (по дням недели)."""
 
-    @patch('src.reports._save_report')
+    @patch("src.reports._save_report")
     def test_weekday_distribution(self, mock_save):
         # Создадим данные: траты в пн, вт, сб, вс
-        df = pd.DataFrame({
-            "Дата операции": [
-                datetime(2026, 6, 29),  # пн (0)
-                datetime(2026, 6, 30),  # вт (1)
-                datetime(2026, 7, 4),   # сб (5)
-                datetime(2026, 7, 5),   # вс (6)
-            ],
-            "Категория": ["A", "A", "B", "B"],
-            "Сумма операции": [-100, -200, -50, -70]
-        })
+        df = pd.DataFrame(
+            {
+                "Дата операции": [
+                    datetime(2026, 6, 29),  # пн (0)
+                    datetime(2026, 6, 30),  # вт (1)
+                    datetime(2026, 7, 4),  # сб (5)
+                    datetime(2026, 7, 5),  # вс (6)
+                ],
+                "Категория": ["A", "A", "B", "B"],
+                "Сумма операции": [-100, -200, -50, -70],
+            }
+        )
 
         result = spending_by_weekday(df)
 
@@ -153,7 +152,7 @@ class TestSpendingByWeekday:
 
         assert mock_save.call_count == 1
 
-    @patch('src.reports._save_report')
+    @patch("src.reports._save_report")
     def test_empty_dataframe_returns_zeros(self, mock_save):
         df = pd.DataFrame()
         result = spending_by_weekday(df)
@@ -165,19 +164,21 @@ class TestSpendingByWeekday:
 class TestSpendingByWorkday:
     """Тесты для spending_by_workday (будни vs выходные)."""
 
-    @patch('src.reports._save_report')
+    @patch("src.reports._save_report")
     def test_work_vs_weekend_split(self, mock_save):
         # Траты: пн, пт, сб, вс
-        df = pd.DataFrame({
-            "Дата операции": [
-                datetime(2026, 6, 29),  # пн (будний)
-                datetime(2026, 7, 3),   # пт (будний)
-                datetime(2026, 7, 4),   # сб (выходной)
-                datetime(2026, 7, 5),   # вс (выходной)
-            ],
-            "Категория": ["A", "A", "B", "B"],
-            "Сумма операции": [-100, -400, -50, -60]
-        })
+        df = pd.DataFrame(
+            {
+                "Дата операции": [
+                    datetime(2026, 6, 29),  # пн (будний)
+                    datetime(2026, 7, 3),  # пт (будний)
+                    datetime(2026, 7, 4),  # сб (выходной)
+                    datetime(2026, 7, 5),  # вс (выходной)
+                ],
+                "Категория": ["A", "A", "B", "B"],
+                "Сумма операции": [-100, -400, -50, -60],
+            }
+        )
 
         result = spending_by_workday(df)
 
@@ -185,7 +186,7 @@ class TestSpendingByWorkday:
         assert abs(result["weekend"] - (-110.0)) < 1e-9  # -50 -60
         assert mock_save.call_count == 1
 
-    @patch('src.reports._save_report')
+    @patch("src.reports._save_report")
     def test_empty_dataframe_returns_zeros_workday(self, mock_save):
         df = pd.DataFrame()
         result = spending_by_workday(df)

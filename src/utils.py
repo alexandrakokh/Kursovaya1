@@ -12,6 +12,7 @@ DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 def log_execution_time(func):
     """Декоратор для замера времени выполнения функции."""
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         start = time.perf_counter()
@@ -20,6 +21,7 @@ def log_execution_time(func):
         duration = end - start
         logger.info("Функция %s выполнена за %.4f сек.", func.__name__, duration)
         return result
+
     return wrapper
 
 
@@ -57,11 +59,7 @@ def load_transactions(file_path: str | None = None) -> pd.DataFrame:
             return pd.DataFrame()
 
         # Строгий формат
-        df[col_date] = pd.to_datetime(
-            df[col_date],
-            format="%d.%m.%Y %H:%M:%S",
-            errors="coerce"
-        )
+        df[col_date] = pd.to_datetime(df[col_date], format="%d.%m.%Y %H:%M:%S", errors="coerce")
 
         # Авто-определение для оставшихся
         mask_null = df[col_date].isna()
@@ -70,11 +68,7 @@ def load_transactions(file_path: str | None = None) -> pd.DataFrame:
                 f"Найдено {mask_null.sum()} дат, не подходящих под формат ДД.ММ.ГГГГ ЧЧ:ММ:СС. "
                 f"Пытаемся распознать их автоматически (dayfirst=True)."
             )
-            df.loc[mask_null, col_date] = pd.to_datetime(
-                df.loc[mask_null, col_date],
-                dayfirst=True,
-                errors="coerce"
-            )
+            df.loc[mask_null, col_date] = pd.to_datetime(df.loc[mask_null, col_date], dayfirst=True, errors="coerce")
 
         initial_rows = len(df)
         df = df.dropna(subset=[col_date])

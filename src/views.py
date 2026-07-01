@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import Optional
 import pandas as pd
 import logging
 from src.utils import log_execution_time
@@ -79,11 +79,9 @@ def build_main_page_response(transactions, report_date_str, now, currency_rates,
     for card_num, group in grouped_by_card:
         total_spent = group["Сумма операции"].sum()
         cashback = abs(total_spent) * 0.01
-        cards_data.append({
-            "last_digits": str(card_num)[-4:],
-            "total_spent": int(total_spent),
-            "cashback": int(cashback)
-        })
+        cards_data.append(
+            {"last_digits": str(card_num)[-4:], "total_spent": int(total_spent), "cashback": int(cashback)}
+        )
 
     # --- Топ-транзакции (исключаем «Переводы») ---
     tx_df = transactions.copy()
@@ -101,11 +99,7 @@ def build_main_page_response(transactions, report_date_str, now, currency_rates,
                 date_str = date_val.strftime("%d.%m.%Y")
             else:
                 date_str = str(date_val)
-            top_tx.append({
-                "date": date_str,
-                "category": row["Категория"],
-                "amount": int(row["Сумма операции"])
-            })
+            top_tx.append({"date": date_str, "category": row["Категория"], "amount": int(row["Сумма операции"])})
 
     # --- Топ-категории (с обработкой «Остальное») ---
     cat_grouped = transactions.groupby("Категория")["Сумма операции"].sum()
@@ -121,18 +115,12 @@ def build_main_page_response(transactions, report_date_str, now, currency_rates,
     others = items[7:]
 
     for cat, amount in first_7:
-        top_cats.append({
-            "category": cat,
-            "amount": int(amount)
-        })
+        top_cats.append({"category": cat, "amount": int(amount)})
 
     # Если есть остальные категории — суммируем их в «Остальное»
     if others:
         rest_amount = sum(amount for _, amount in others)
-        top_cats.append({
-            "category": "Остальное",
-            "amount": int(rest_amount)
-        })
+        top_cats.append({"category": "Остальное", "amount": int(rest_amount)})
 
     # --- Кешбэк-категории (исключаем спецкатегории: Переводы, Наличные) ---
     special_cats = {"Переводы", "Наличные"}

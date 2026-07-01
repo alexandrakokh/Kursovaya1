@@ -19,7 +19,7 @@ def investment_bank(month: str, transactions: List[Dict[str, Any]], limit: int) 
 
         try:
             amount = float(t.get("Сумма операции", 0))
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             continue
 
         if amount <= 0:
@@ -53,7 +53,7 @@ def analyze_cashback_categories(transactions: List[Dict[str, Any]], year: int, m
 
         try:
             amount = float(t.get("Сумма операции", 0))
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             continue
 
         if amount <= 0:
@@ -70,7 +70,7 @@ PERSON_TRANSFER_REGEX = re.compile(r"[А-ЯЁ][а-яё]+\s+[А-ЯЁ]\.")
 
 def search_transactions(transactions: List[Dict[str, Any]], query: str) -> List[Dict[str, Any]]:
     print("=== search_transactions ЗАПУЩЕНА ===")
-    q = query.lower().replace('ё', 'е')
+    q = query.lower().replace("ё", "е")
     print(f"--- NORMALIZED QUERY: {repr(q)} ---")
 
     result = []
@@ -79,8 +79,8 @@ def search_transactions(transactions: List[Dict[str, Any]], query: str) -> List[
         cat_raw = t.get("Категория", "")
 
         # Нормализуем
-        desc = str(desc_raw).lower().replace('ё', 'е')
-        cat = str(cat_raw).lower().replace('ё', 'е')
+        desc = str(desc_raw).lower().replace("ё", "е")
+        cat = str(cat_raw).lower().replace("ё", "е")
 
         print(f"[{i}] desc_raw={repr(desc_raw)} | desc={repr(desc)} | cat={repr(cat)} | match={q in desc or q in cat}")
 
@@ -113,4 +113,3 @@ def find_person_transfers(transactions: List[Dict[str, Any]]) -> List[Dict[str, 
             result.append(t)
 
     return result
-

@@ -3,6 +3,7 @@ from typing import List, Dict, Any
 
 logger = logging.getLogger(__name__)
 
+
 def fetch_currency_rates() -> List[Dict[str, Any]]:
     try:
         raise Exception("API недоступно (для теста)")
@@ -12,6 +13,7 @@ def fetch_currency_rates() -> List[Dict[str, Any]]:
             {"currency": "USD", "rate": 90.0},
             {"currency": "EUR", "rate": 98.0},
         ]
+
 
 def fetch_stock_prices() -> List[Dict[str, Any]]:
     try:
