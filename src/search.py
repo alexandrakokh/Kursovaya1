@@ -4,12 +4,14 @@ import pandas as pd
 
 PHONE_DIGITS_ONLY = re.compile(r"\D")  # всё, что не цифра — удаляем
 
+
 def normalize_phone(text: str) -> str:
     """Оставляет только цифры. Для 11-значных номеров с 7/8 делает формат 7xxxxxxxxxx."""
     digits = PHONE_DIGITS_ONLY.sub("", str(text))
     if len(digits) == 11 and digits.startswith(("7", "8")):
         return "7" + digits[1:]
     return digits
+
 
 def search_by_phone_pattern(df: pd.DataFrame, phone_query: str) -> List[Dict[str, Any]]:
     """
@@ -32,12 +34,15 @@ def search_by_phone_pattern(df: pd.DataFrame, phone_query: str) -> List[Dict[str
         return []
 
     out = matches[["Дата операции", "Сумма операции", "Категория", "Описание"]].copy()
-    out.rename(columns={
-        "Дата операции": "date",
-        "Сумма операции": "amount",
-        "Категория": "category",
-        "Описание": "description"
-    }, inplace=True)
+    out.rename(
+        columns={
+            "Дата операции": "date",
+            "Сумма операции": "amount",
+            "Категория": "category",
+            "Описание": "description",
+        },
+        inplace=True,
+    )
 
     def fmt_date(x):
         if isinstance(x, pd.Timestamp):

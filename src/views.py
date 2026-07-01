@@ -1,18 +1,13 @@
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import Optional
 import pandas as pd
 import logging
+from src.utils import log_execution_time
 
 logger = logging.getLogger(__name__)
 
 
 def get_greeting(dt: datetime) -> str:
-    """
-    06:00–11:59 — «Доброе утро»
-    12:00–17:59 — «Добрый день»
-    18:00–22:59 — «Добрый вечер»
-    23:00–05:59 — «Доброй ночи»
-    """
     hour = dt.hour
     if 6 <= hour <= 11:
         return "Доброе утро"
@@ -20,12 +15,11 @@ def get_greeting(dt: datetime) -> str:
         return "Добрый день"
     elif 18 <= hour <= 22:
         return "Добрый вечер"
-    else:  # 23, 0, 1, 2, 3, 4, 5
+    else:
         return "Доброй ночи"
 
 
 def _find_amount_column(df: pd.DataFrame) -> Optional[str]:
-    """Ищет колонку с суммой, пробуя разные варианты названий."""
     possible_names = ["Сумма операции", "Сумма платежа", "Amount", "sum"]
     for name in possible_names:
         if name in df.columns:
@@ -33,237 +27,112 @@ def _find_amount_column(df: pd.DataFrame) -> Optional[str]:
     return None
 
 
-def build_main_page_response(
-        transactions: pd.DataFrame,
-        date_str: str,
-        stock_prices: List[Dict[str, Any]],
-        currency_rates: List[Dict[str, float]]
-) -> Dict[str, Any]:
+@log_execution_time
+def build_main_page_response(transactions, report_date_str, now, currency_rates, stock_prices):
     """
-    Собирает ответ для главной страницы.
-    Полностью соответствует чек-листу курсовой.
+    Возвращает словарь строго в формате, который ждут тесты:
+    greeting, cards, top_categories, total_operations_count, top_cashback_categories, top_transactions
     """
-    try:
-        dt = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
-    except ValueError:
-        dt = datetime.now()
 
-    greeting = get_greeting(dt)
-    filtered = transactions.copy()
+    # 1. Приветствие
+    hour = now.hour
+    if 5 <= hour < 12:
+        greeting = "Доброе утро"
+    elif 12 <= hour < 18:
+        greeting = "Добрый день"
+    elif 18 <= hour < 23:
+        greeting = "Добрый вечер"
+    else:
+        greeting = "Доброй ночи"
 
-    # Если данных нет — возвращаем пустой, но валидный JSON
-    if filtered.empty:
-        logger.warning("Нет данных для отображения после фильтрации.")
+    # Если DataFrame пустой
+    if transactions.empty:
         return {
             "greeting": greeting,
             "cards": [],
             "top_categories": [],
-            "top_transactions": [],
-            "currency_rates": currency_rates,
-            "stock_prices": stock_prices,
             "total_operations_count": 0,
-            "top_cashback_categories": []
+            "top_cashback_categories": [],
+            "top_transactions": [],
+            "currency_rates": currency_rates,
+            "stock_prices": stock_prices,
         }
 
-    amount_col = _find_amount_column(filtered)
-
-    if not amount_col:
-        logger.error("Не найдена колонка с суммой операции. Проверьте заголовки в Excel.")
-        # Возвращаем структуру даже без сумм, чтобы JSON был валидным
+    # Проверка наличия колонки «Сумма операции»
+    if "Сумма операции" not in transactions.columns:
         return {
             "greeting": greeting,
             "cards": [],
             "top_categories": [],
+            "total_operations_count": len(transactions),
+            "top_cashback_categories": [],
             "top_transactions": [],
             "currency_rates": currency_rates,
             "stock_prices": stock_prices,
-            "total_operations_count": len(filtered),
-            "top_cashback_categories": []
         }
 
-    # --- Блок 1: Данные по картам (расходы, поступления, кешбэк) ---
-    cards = []
-    if "Номер карты" in filtered.columns:
-        for card, group in filtered.groupby("Номер карты"):
-            spending_group = group[group[amount_col] < 0]
-            total_spent = spending_group[amount_col].sum()
+    total_ops = len(transactions)
 
-            income_group = group[group[amount_col] > 0]
-            total_income = income_group[amount_col].sum()
+    # --- Расчёт по картам (cards) ---
+    cards_data = []
+    grouped_by_card = transactions.groupby("Номер карты")
+    for card_num, group in grouped_by_card:
+        total_spent = group["Сумма операции"].sum()
+        cashback = abs(total_spent) * 0.01
+        cards_data.append(
+            {"last_digits": str(card_num)[-4:], "total_spent": int(total_spent), "cashback": int(cashback)}
+        )
 
-            cashback = abs(total_spent) * 0.01
+    # --- Топ-транзакции (исключаем «Переводы») ---
+    tx_df = transactions.copy()
+    if "Категория" in tx_df.columns:
+        tx_df = tx_df[tx_df["Категория"] != "Переводы"]
 
-            cards.append({
-                "last_digits": str(card)[-4:] if pd.notna(card) else "Unknown",
-                "total_spent": round(total_spent),
-                "total_income": round(total_income),
-                "cashback": round(cashback)
-            })
+    top_tx = []
+    if not tx_df.empty and "Сумма операции" in tx_df.columns:
+        # Сортируем по убыванию модуля суммы (т.к. траты отрицательные, сортируем по возрастанию)
+        tx_sorted = tx_df.sort_values(by="Сумма операции", ascending=True)
+        top_n = tx_sorted.head(5)
+        for _, row in top_n.iterrows():
+            date_val = row["Дата операции"]
+            if isinstance(date_val, datetime):
+                date_str = date_val.strftime("%d.%m.%Y")
+            else:
+                date_str = str(date_val)
+            top_tx.append({"date": date_str, "category": row["Категория"], "amount": int(row["Сумма операции"])})
 
-    # --- Блок 2: Топ-5 транзакций (только траты, без переводов/пополнений) ---
-    top_list = []
-    spending_df = filtered[filtered[amount_col] < 0].copy()
+    # --- Топ-категории (с обработкой «Остальное») ---
+    cat_grouped = transactions.groupby("Категория")["Сумма операции"].sum()
+    # Сортируем по убыванию модуля суммы
+    cat_sorted = cat_grouped.reindex(cat_grouped.abs().sort_values(ascending=False).index)
 
-    if not spending_df.empty:
-        exclude_categories = {"Переводы", "Пополнения"}
+    top_cats = []
+    rest_amount = 0
 
-        if "Категория" in spending_df.columns:
-            spending_df["Категория_clean"] = (
-                spending_df["Категория"].astype(str).str.strip().str.lower()
-            )
-            mask_exclude = spending_df["Категория_clean"].isin(
-                [c.lower() for c in exclude_categories]
-            )
-            spending_filtered = spending_df[~mask_exclude]
-            spending_filtered = spending_filtered[spending_filtered["Категория_clean"] != "nan"]
-        else:
-            spending_filtered = spending_df
+    # Берем первые 7 категорий
+    items = list(cat_sorted.items())
+    first_7 = items[:7]
+    others = items[7:]
 
-        if not spending_filtered.empty:
-            top_idx = spending_filtered[amount_col].abs().nlargest(5).index
-            top_df = spending_filtered.loc[top_idx]
+    for cat, amount in first_7:
+        top_cats.append({"category": cat, "amount": int(amount)})
 
-            cols_to_keep = ["Дата операции", amount_col, "Категория", "Описание"]
-            cols_final = [c for c in cols_to_keep if c in top_df.columns]
+    # Если есть остальные категории — суммируем их в «Остальное»
+    if others:
+        rest_amount = sum(amount for _, amount in others)
+        top_cats.append({"category": "Остальное", "amount": int(rest_amount)})
 
-            top_transactions = top_df[cols_final].copy()
-            top_transactions.rename(columns={
-                "Дата операции": "date",
-                amount_col: "amount",
-                "Категория": "category",
-                "Описание": "description"
-            }, inplace=True)
-
-            top_list = top_transactions.to_dict(orient="records")
-
-            # ВАЖНО: формат даты строго dd.mm.yyyy (без времени)
-            for t in top_list:
-                if isinstance(t.get("date"), pd.Timestamp):
-                    t["date"] = t["date"].strftime("%d.%m.%Y")
-                else:
-                    t["date"] = str(t.get("date", ""))
-
-    # --- Блок 3: Топ категорий (с выделением «Переводы» и «Наличные») ---
-    top_categories = []
-    rest_amount = 0.0
-    special_categories = {"Переводы", "Наличные"}
-
-    if "Категория" in filtered.columns:
-        spending_df = filtered[filtered[amount_col] < 0].copy()
-        if not spending_df.empty:
-            spending_df["Категория_clean"] = (
-                spending_df["Категория"].astype(str).str.strip()
-            )
-            spending_df = spending_df[spending_df["Категория_clean"] != "nan"]
-
-            grouped = spending_df.groupby("Категория_clean")[amount_col].sum()
-
-            # 1. Сначала добавляем «Переводы» и «Наличные» отдельными строками
-            for cat in special_categories:
-                if cat in grouped.index:
-                    top_categories.append({
-                        "category": cat,
-                        "amount": round(grouped[cat])
-                    })
-                    grouped = grouped.drop(cat)  # Убираем, чтобы не дублировать в топе
-
-            # 2. Топ-7 остальных категорий
-            candidates = grouped
-            top_7 = candidates.nlargest(7)
-
-            rest_series = candidates.drop(labels=top_7.index, errors="ignore")
-            rest_amount = rest_series.sum()
-
-            for cat, amt in top_7.items():
-                top_categories.append({
-                    "category": cat,
-                    "amount": round(amt)
-                })
-
-            if rest_amount != 0:
-                top_categories.append({
-                    "category": "Остальное",
-                    "amount": round(rest_amount)
-                })
-
-    # --- Блок 4: Топ-3 категории для кешбэка (исключая переводы/наличные/пополнения) ---
-    top_cashback_categories = []
-    exclude_from_cashback = {"Переводы", "Наличные", "Пополнения"}
-
-    if "Категория" in filtered.columns:
-        spending_df = filtered[filtered[amount_col] < 0].copy()
-        if not spending_df.empty:
-            spending_df["Категория_clean"] = (
-                spending_df["Категория"].astype(str).str.strip()
-            )
-            spending_df = spending_df[spending_df["Категория_clean"] != "nan"]
-
-            grouped = spending_df.groupby("Категория_clean")[amount_col].sum()
-
-            # Исключаем категории, за которые кешбэк не начисляется
-            for excl in exclude_from_cashback:
-                if excl in grouped.index:
-                    grouped = grouped.drop(excl)
-
-            if not grouped.empty:
-                cashbacks = grouped.abs() * 0.01  # 1% кешбэк
-                top_3 = cashbacks.nlargest(3)
-
-                for cat, cb in top_3.items():
-                    top_cashback_categories.append({
-                        "category": cat,
-                        "cashback": round(cb)
-                    })
-
-    response = {
-        "greeting": greeting,
-        "cards": cards,
-        "top_categories": top_categories,
-        "top_transactions": top_list,
-        "currency_rates": currency_rates,
-        "stock_prices": stock_prices,
-        "total_operations_count": len(filtered),
-        "top_cashback_categories": top_cashback_categories,
-    }
-
-    logger.info(f"build_main_page_response: date={date_str}, processed rows={len(filtered)}")
-    return response
-
-
-def build_events_response(transactions: pd.DataFrame, date_str: str, range_type: str) -> Dict[str, Any]:
-    """Заглушка для страницы событий (для соответствия структуре проекта)."""
-    try:
-        dt = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
-    except ValueError:
-        dt = datetime.now()
-
-    greeting = get_greeting(dt)
-    amount_col = _find_amount_column(transactions)
-
-    events = []
-    if amount_col and not transactions.empty:
-        recent_df = transactions.tail(10)
-        cols_to_keep = ["Дата операции", amount_col, "Категория", "Описание"]
-        cols_final = [c for c in cols_to_keep if c in recent_df.columns]
-
-        events_raw = recent_df[cols_final].copy()
-        events_raw.rename(columns={
-            "Дата операции": "date",
-            amount_col: "amount",
-            "Категория": "category",
-            "Описание": "description"
-        }, inplace=True)
-
-        events = events_raw.to_dict(orient="records")
-
-        for e in events:
-            if isinstance(e.get("date"), pd.Timestamp):
-                e["date"] = e["date"].strftime("%d.%m.%Y")
-            e["description"] = e.get("description", "")
+    # --- Кешбэк-категории (исключаем спецкатегории: Переводы, Наличные) ---
+    special_cats = {"Переводы", "Наличные"}
+    cb_cats = [c for c in top_cats if c["category"] not in special_cats]
 
     return {
         "greeting": greeting,
-        "events": events,
-        "range_type": range_type,
-        "total_count": len(transactions)
+        "cards": cards_data,
+        "top_categories": top_cats,
+        "total_operations_count": total_ops,
+        "top_cashback_categories": cb_cats,
+        "top_transactions": top_tx,
+        "currency_rates": currency_rates,
+        "stock_prices": stock_prices,
     }

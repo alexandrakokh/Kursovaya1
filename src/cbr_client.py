@@ -4,6 +4,7 @@ from typing import Optional, Dict, Any, List
 
 logger = logging.getLogger(__name__)
 
+
 def get_cbr_rates_json() -> Optional[Dict[str, Any]]:
     url = "https://www.cbr-xml-daily.ru/daily_json.js"
     try:
@@ -45,4 +46,3 @@ def build_currency_rates(rates_data: Optional[Dict[str, Any]]) -> List[Dict[str,
             result.append({"currency": cur, "rate": 90.0 if cur == "USD" else 98.0})
 
     return result
-

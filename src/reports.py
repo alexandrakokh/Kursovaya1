@@ -50,11 +50,7 @@ def spending_by_category(df: pd.DataFrame, category: str) -> dict:
 
     logger.info(f"spending_by_category: category={category}, rows={rows}")
 
-    result = {
-        "category": target_category,
-        "total_amount": float(total),
-        "rows": rows
-    }
+    result = {"category": target_category, "total_amount": float(total), "rows": rows}
 
     # Сохраняем отчёт
     _save_report(result, f"spending_by_category_{target_category.replace(' ', '_')}")
@@ -99,10 +95,7 @@ def spending_by_workday(df: pd.DataFrame) -> dict:
     work_days = spending_df[spending_df["day_of_week"].between(0, 4)]
     weekend_days = spending_df[spending_df["day_of_week"].between(5, 6)]
 
-    result = {
-        "work": float(work_days["Сумма операции"].sum()),
-        "weekend": float(weekend_days["Сумма операции"].sum())
-    }
+    result = {"work": float(work_days["Сумма операции"].sum()), "weekend": float(weekend_days["Сумма операции"].sum())}
 
     _save_report(result, "spending_by_workday")
     return result
