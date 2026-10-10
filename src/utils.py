@@ -25,6 +25,7 @@ def log_execution_time(func):
     return wrapper
 
 
+@log_execution_time
 def load_transactions(file_path: str | None = None) -> pd.DataFrame:
     """
     Загружает транзакции из Excel с валидацией типов данных.
